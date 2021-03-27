@@ -11,13 +11,17 @@
   "dependencies": {
     "bereich": "^1.0.0",
     "dotenv": "^8.2.0",
+    "fs": "^0.0.1-security",
     "nodemailer": "^6.5.0",
     "npm": "^7.7.5",
+    "p-event": "^4.2.0",
     "pdf2json": "^1.1.2",
     "pdfjs-dist": "^2.6.347",
     "pdfreader": "^1.0.0",
     "puppeteer": "^8.0.0",
     "run": "^1.4.0",
-    "test": "^0.6.0"
+    "test": "^0.6.0",
+    "util": "^0.12.3",
+    "wait-for-event": "^2.0.1"
   }
 }
