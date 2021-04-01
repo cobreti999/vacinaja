@@ -56,7 +56,7 @@ let numberOfEmailsSent = 0;
     }
     console.log('Fim da iteração');
 
-    await sleep(5000); // 5 min
+    await sleep(600000); // 10 min
 
   }while (numberOfEmailsSent < 3);
   
