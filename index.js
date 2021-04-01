@@ -28,7 +28,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const vacinaUrl = "https://coronavirus.fortaleza.ce.gov.br/listaVacinacao.html";
-const linkElements = "//i[contains(@class, 'fa fa-download')]/../..";
+const linkElements = "//ul[contains(@id, 'boletinsAnteriores')]/li/a";
 let numberOfEmailsSent = 0;
 
 (async () => {
@@ -54,9 +54,9 @@ let numberOfEmailsSent = 0;
       console.log(error);
       process.exit(0);
     }
-    console.log('Nomes não encontrados');
+    console.log('Fim da iteração');
 
-    await sleep(300000); // 5 min
+    await sleep(5000); // 5 min
 
   }while (numberOfEmailsSent < 3);
   
@@ -72,35 +72,34 @@ async function openSiteDownloadFiles(url,linkElements,listaNomes) {
   await page.goto(url);
   await sleep(2000);
   const linkElementsList = await page.$x(linkElements);
-  if (linkElementsList){
-    for (let i = 0; i < linkElementsList.length; i++){
-      let property = await linkElementsList[i].getProperty('href');
-      let pdfUrl =  await property.jsonValue();
-      let pdfName = `Lista${i}.pdf`;
-      await downloadFileFromURL(pdfUrl, pdfName);
-        let texto = await convertPdfToObject(pdfName, i);
-        let listaNomesEncontrados = await searchNamesInObject(texto,listaNomes);
-        if (listaNomesEncontrados.length){
-          //Send email com lista de nomes encontrados
-          const mailOptions = {
-            from: process.env.user,
-            to: process.env.destination,
-            subject: 'Vacina disponivel!!',
-            text: 'Pessoas encontradas: ' + listaNomesEncontrados
-          };
-          console.log('email enviado');
-          transporter.sendMail(mailOptions, function(error, info){
-            if (error) {
-              console.log(error);
-            } else {
-              console.log('Email sent: ' + info.response);
-              numberOfEmailsSent++;
-            }
-          });
+  const firstLink = linkElementsList[0];
+  if (firstLink){
+    let property = await firstLink.getProperty('href');
+    let pdfUrl =  await property.jsonValue();
+    let pdfName = `Lista.pdf`;
+    await downloadFileFromURL(pdfUrl, pdfName);
+    let texto = await convertPdfToObject(pdfName);
+    let listaNomesEncontrados = await searchNamesInObject(texto,listaNomes);
+    if (listaNomesEncontrados.length){
+      //Send email com lista de nomes encontrados
+      const mailOptions = {
+        from: process.env.user,
+        to: process.env.destination,
+        subject: 'Vacina disponivel!!',
+        text: 'Pessoas encontradas: ' + listaNomesEncontrados
+      };
+      console.log('email enviado');
+      transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+          numberOfEmailsSent++;
         }
-        else{
-          console.log('nao achou');
-        }
+      });
+    }
+    else{
+      console.log('nao achou');
     }    
   }
   await browser.close();
@@ -120,13 +119,13 @@ async function downloadFileFromURL(url, downloadLocation){
 	}
 }
 
-async function convertPdfToObject(pdfName, fileNumber){
+async function convertPdfToObject(pdfName){
   let texto;
   let pdfParser = new PDFParser(this,1);
   pdfParser.loadPDF(pdfName);
   //Wait for the pdfParser_dataReady event to be finished
   await pEvent(pdfParser, 'pdfParser_dataReady');
-  let textFileName = `createdTextFile${fileNumber}.txt`;
+  let textFileName = `createdTextFile.txt`;
   try {
     fs.writeFileSync(textFileName, pdfParser.getRawTextContent());
   } catch (err) {
